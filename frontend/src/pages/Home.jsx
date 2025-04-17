@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AddNote from "../components/AddNote";
 import NoteCard from "../components/NoteCard";
-import axios from "axios";
 
 export default function Home() {
     const msgStyle = {
@@ -14,23 +13,14 @@ export default function Home() {
         fontSize: "1.3em",
     };
     const [notes, setNotes] = useState([]);
+    
     useEffect(() => {
-        const fetchNotes = () => {
-            axios
-                .get(`${import.meta.env.VITE_APP_API_URL}/allNotes`)
-                .then((res) => {
-                    if (res.data.content) {
-                        setNotes(res.data.content);
-                    } else {
-                        setNotes([]);
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                });
-        };
-        fetchNotes();
+        const storedNotes = localStorage.getItem('notes');
+        if (storedNotes) {
+            setNotes(JSON.parse(storedNotes));
+        }
     }, []);
+
     return (
         <div>
             <h1 className="headline">
@@ -40,7 +30,7 @@ export default function Home() {
             <div className="cards">
                 {notes && notes.length > 0 ? (
                     notes.map((note) => (
-                        <NoteCard key={note._id} note={note} />
+                        <NoteCard key={note.id} note={note} />
                     ))
                 ) : (
                     <p style={msgStyle}>No Notes To Show</p>

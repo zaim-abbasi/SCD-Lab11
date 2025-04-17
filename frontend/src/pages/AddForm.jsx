@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -11,29 +10,42 @@ export default function AddForm() {
     });
 
     const changeHandler = (event) => {
-      const { name, value} = event.target;
-      setNote( {...note, [name]: value});
+        const { name, value } = event.target;
+        setNote({ ...note, [name]: value });
     };
 
     const navigate = useNavigate();
     const submitHandler = (event) => {
-      event.preventDefault();
-      axios
-        .post(`${import.meta.env.VITE_APP_API_URL}/addNote`, note)
-        .then(() => {
-          navigate('/');
-          Swal.fire({
+        event.preventDefault();
+        
+        // Generate a unique ID
+        const newNote = {
+            ...note,
+            id: Date.now().toString(),
+            createdAt: new Date().toISOString()
+        };
+
+        // Get existing notes from localStorage
+        const existingNotes = JSON.parse(localStorage.getItem('notes') || '[]');
+        
+        // Add new note to the array
+        const updatedNotes = [newNote, ...existingNotes];
+        
+        // Save back to localStorage
+        localStorage.setItem('notes', JSON.stringify(updatedNotes));
+
+        navigate('/');
+        Swal.fire({
             title: 'Your note has been added successfully!',
             showClass: {
-              popup: 'animate__animated animate__fadeInDown'
+                popup: 'animate__animated animate__fadeInDown'
             },
             hideClass: {
-              popup: 'animate__animated animate__fadeOutUp'
+                popup: 'animate__animated animate__fadeOutUp'
             }
-          })
-        })
-        .catch((err) => {err.data.msg});
+        });
     };
+
     return (
         <div>
             <h1 className="headline">
@@ -51,9 +63,9 @@ export default function AddForm() {
                 <textarea
                     name="details"
                     rows="5"
-                    defaultValue={note.details}
+                    value={note.details}
                     onChange={changeHandler}
-                    placeholder="Descride Your Note ..."
+                    placeholder="Describe Your Note ..."
                     required
                 ></textarea>
                 <button type="submit" onClick={submitHandler}>Save Note</button>

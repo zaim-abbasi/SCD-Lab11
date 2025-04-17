@@ -9,18 +9,31 @@ const app = express();
 // Environment Variables
 require("dotenv").config();
 
-// Connecting to Database
-mongoose
-  .connect(process.env.dbURL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then((result) =>
-    app.listen(process.env.PORT || 3000, () => {
-      console.log("Connection to the Database was established!");
+// MongoDB connection with retry logic
+const connectWithRetry = () => {
+  const mongoUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/notes';
+  
+  mongoose
+    .connect(mongoUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     })
-  )
-  .catch((error) => console.log(error));
+    .then(() => {
+      console.log("Successfully connected to MongoDB!");
+      // Only start listening after successful connection
+      app.listen(process.env.PORT || 3001, () => {
+        console.log(`Server is running on port ${process.env.PORT || 3001}`);
+      });
+    })
+    .catch((err) => {
+      console.log('MongoDB connection error:', err);
+      console.log('Retrying in 5 seconds...');
+      setTimeout(connectWithRetry, 5000);
+    });
+};
+
+// Initial connection attempt
+connectWithRetry();
 
 // Middlewares
 app.use(express.json()); // JSON Parser
@@ -30,10 +43,16 @@ app.use(express.urlencoded({ extended: true })); // URL Body Parser
 app.use(
   cors({
     origin: "*",
-    // credentials: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
   })
 );
 
 // Routes
 const routes = require("./routes/routes");
 app.use(routes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});

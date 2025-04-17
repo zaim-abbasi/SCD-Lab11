@@ -1,16 +1,29 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - net1
+
   backend:
     build: 
       context: ./server
       dockerfile: Dockerfile
     restart: always
     environment:
-      - MONGODB_URI=${MONGODB_URI}
-      - PORT=${PORT}
+      - MONGODB_URI=mongodb://mongodb:27017/notes
+      - PORT=3001
     ports:
       - "3001:3001"
+    depends_on:
+      - mongodb
+    networks:
+      - net1
+      - net2
 
   frontend:
     build:
@@ -20,6 +33,23 @@ services:
     ports:
       - "3000:80"
     environment:
-      - VITE_APP_API_URL=${VITE_APP_API_URL}
+      - VITE_APP_API_URL=http://localhost:3001
     depends_on:
       - backend
+    networks:
+      - net1
+
+volumes:
+  mongodb_data:
+
+networks:
+  net1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+  net2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.200.0/24

@@ -1,4 +1,3 @@
-import axios from "axios";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -15,6 +14,7 @@ export default function DetailCard({ note }) {
         cursor: "pointer",
         textDecoration: "none",
     };
+    
     const navigate = useNavigate();
     const deleteNote = () => {
         Swal.fire({
@@ -27,29 +27,26 @@ export default function DetailCard({ note }) {
             confirmButtonText: "Yes, delete it!",
         }).then((result) => {
             if (result.isConfirmed) {
-                axios
-                    .delete(`${import.meta.env.VITE_APP_API_URL}/deleteNote/${note._id}`)
-                    .then(() => {
-                        navigate("/");
-                        Swal.fire(
-                            "Deleted!",
-                            "Your Note has been deleted.",
-                            "success"
-                        );
-                    })
-                    .catch((err) => console.error(err));
-            } else {
-                return;
+                const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+                const updatedNotes = notes.filter(n => n.id !== note.id);
+                localStorage.setItem('notes', JSON.stringify(updatedNotes));
+                
+                navigate("/");
+                Swal.fire(
+                    "Deleted!",
+                    "Your Note has been deleted.",
+                    "success"
+                );
             }
         });
     };
+
     return (
         <div className="note-details">
             <h1 className="title">{note.title}</h1>
             <p className="details">{note.details}</p>
             <div className="action">
-                <Link style={btnStyle} to={`/edit/${note._id}`}>
-                    {" "}
+                <Link style={btnStyle} to={`/edit/${note.id}`}>
                     Edit
                 </Link>
                 <button style={btnStyle} onClick={deleteNote}>

@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Swal from "sweetalert2";
 
 export default function EditForm() {
@@ -9,14 +8,15 @@ export default function EditForm() {
         title: '',
         details: '',
     });
+
     useEffect(() => {
-        axios
-            .get(`${import.meta.env.VITE_APP_API_URL}/noteDetails/${id}`)
-            .then((res) => {
-                setNote(res.data.content);
-            })
-            .catch((err) => console.log(err));
+        const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+        const foundNote = notes.find(note => note.id === id);
+        if (foundNote) {
+            setNote(foundNote);
+        }
     }, [id]);
+
     const changeHandler = (event) => {
         const {name, value} = event.target;
         setNote({ ...note, [name]: value });
@@ -25,16 +25,17 @@ export default function EditForm() {
     const navigate = useNavigate();
     const submitHandler = (event) => {
         event.preventDefault();
-        axios
-            .patch(`${import.meta.env.VITE_APP_API_URL}/updateNote/${id}`, note)
-            .then(() => {
-                navigate(`/details/${id}`);
-                Swal.fire('Your note has been updated successfully!')
-            })
-            .catch((err) => console.error(err));
+        
+        const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+        const updatedNotes = notes.map(n => n.id === id ? note : n);
+        localStorage.setItem('notes', JSON.stringify(updatedNotes));
+
+        navigate(`/details/${id}`);
+        Swal.fire('Your note has been updated successfully!');
     }
-  return (
-    <div>
+
+    return (
+        <div>
             <h1 className="headline">
                 Edit <span>Note</span>
             </h1>
@@ -49,12 +50,12 @@ export default function EditForm() {
                 <textarea
                     name="details"
                     rows="5"
-                    defaultValue={note.details}
+                    value={note.details}
                     onChange={changeHandler}
-                    placeholder="Descride Your Note ..."
+                    placeholder="Describe Your Note ..."
                 ></textarea>
                 <button onClick={submitHandler}>Save Changes</button>
             </form>
         </div>
-  )
+    );
 }
