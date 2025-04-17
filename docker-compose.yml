@@ -1,18 +1,6 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:latest
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
-    volumes:
-      - mongodb_data:/data/db
-    ports:
-      - "27017:27017"
-
   backend:
     build: 
       context: ./server
@@ -23,8 +11,6 @@ services:
       - PORT=${PORT}
     ports:
       - "3001:3001"
-    depends_on:
-      - mongodb
 
   frontend:
     build:
@@ -37,6 +23,3 @@ services:
       - VITE_APP_API_URL=${VITE_APP_API_URL}
     depends_on:
       - backend
-
-volumes:
-  mongodb_data:
